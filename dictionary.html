@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyDictionary</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #e3f2fd, #f9f9f9);
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #0078d7;
+      font-weight: 600;
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+    }
+    input {
+      width: 100%;
+      max-width: 500px;
+      padding: 14px 18px;
+      font-size: 1em;
+      border: 2px solid #0078d7;
+      border-radius: 50px;
+      outline: none;
+      transition: 0.3s ease;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    input:focus {
+      border-color: #005bb5;
+      box-shadow: 0 4px 12px rgba(0, 120, 215, 0.3);
+    }
+    #dictionary {
+      margin-top: 30px;
+      width: 100%;
+      max-width: 700px;
+    }
+    .word {
+      font-size: 2.2em;
+      font-weight: 600;
+      color: #111;
+      text-align: center;
+    }
+    .phonetic {
+      color: #0078d7;
+      text-align: center;
+      font-style: italic;
+      margin-top: 5px;
+    }
+    audio {
+      display: block;
+      margin: 15px auto;
+    }
+    .meaning {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: transform 0.2s ease;
+    }
+    .meaning:hover {
+      transform: scale(1.01);
+    }
+    .part {
+      color: #0078d7;
+      font-weight: 600;
+      font-size: 1.1em;
+      margin-bottom: 10px;
+    }
+    p {
+      margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📘 MyDictionary</h1>
+  <input type="text" id="search" placeholder="Type a word and press Enter..." />
+
+  <div id="dictionary"></div>
+
+  <script>
+    const dictionaryDiv = document.getElementById('dictionary');
+    const searchInput = document.getElementById('search');
+
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const word = searchInput.value.trim();
+        if (word) fetchWord(word);
+      }
+    });
+
+    function fetchWord(word) {
+      dictionaryDiv.innerHTML = "<p style='text-align:center;'>🔍 Searching...</p>";
+      fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+        .then(res => {
+          if (!res.ok) throw new Error("Word not found 😢");
+          return res.json();
+        })
+        .then(data => displayWord(data[0]))
+        .catch(err => {
+          dictionaryDiv.innerHTML = `<p style="color:red; text-align:center;">${err.message}</p>`;
+        });
+    }
+
+    function displayWord(wordData) {
+      dictionaryDiv.innerHTML = `
+        <div class="word">${wordData.word}</div>
+        <div class="phonetic">/${wordData.phonetic || (wordData.phonetics[0]?.text || "—")}/</div>
+        ${wordData.phonetics[0]?.audio ? `<audio controls src="${wordData.phonetics[0].audio}"></audio>` : ""}
+        ${wordData.origin ? `<p><strong>Origin:</strong> ${wordData.origin}</p>` : ""}
+        ${wordData.meanings.map(meaning => `
+          <div class="meaning">
+            <div class="part">${meaning.partOfSpeech}</div>
+            ${meaning.definitions.map(def => `
+              <p><strong>Definition:</strong> ${def.definition}</p>
+              <p><em>Example:</em> ${def.example || "—"}</p>
+            `).join('')}
+          </div>
+        `).join('')}
+      `;
+    }
+  </script>
+</body>
+</html>
